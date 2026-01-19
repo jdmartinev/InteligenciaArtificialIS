@@ -3,24 +3,45 @@
 
 Course Repository CM0091 Artificial Intelligence at Universidad EAFIT
 
-| **INSTRUCTOR** | Juan David Martínez Vargas (jdmartinev@eafit.edu.co)   |
-| -------------- | -------------------------------- |
-| **LECTURES**   | Tuesday 7:30 – 9:00 33-203, <br> Thursday 7:30 - 9:00 33-202|
-| **MATERIAL**   | [repo](https://github.com/jdmartinev/ArtificialIntelligenceIM/)  
 
 ![Summary of Introduction of AI content in a doodle](AI.jpg)
 > Sketchnote by [Tomomi Imura](https://twitter.com/girlie_mac)
 
-## Roadmap of the course
+# What you will learn in this course
 
-**[Roadmap of the Course](/Lecture01/schedule.md)**
+In this course, students will acquire a **comprehensive and practice-oriented understanding of Artificial Intelligence**, covering classical foundations, modern learning-based approaches, and contemporary generative and agent-based systems.
 
+Specifically, the course covers:
 
-## We will learn in this course:
+- **Foundations of Artificial Intelligence**, including intelligent agents, problem formulation, uninformed and heuristic search, constraint satisfaction problems, and classical planning.
+- **Machine Learning and Deep Learning**, with an emphasis on supervised learning pipelines, decision trees and ensembles, neural networks, and deep learning fundamentals implemented using **PyTorch**.
+- **AI for perception and language**, including computer vision with pre-trained convolutional networks, and natural language processing with transformers and zero-shot capabilities.
+- **Contemporary AI practice**, including **Generative AI**, scaling laws, large language models, agent-based systems, multimodality, and modern AI engineering practices such as reproducibility, deployment, and responsible AI.
+- **Integration and evaluation**, through an end-to-end AI project that consolidates technical, ethical, and engineering considerations.
 
-* **Neural Networks** and **Deep Learning**, which are at the core of modern AI. We will illustrate the concepts behind these important topics using code in two of the most popular frameworks - [TensorFlow](http://Tensorflow.org) and [PyTorch](http://pytorch.org).
-* **Neural Architectures** for working with images and text. We will cover recent models but may be a bit lacking in the state-of-the-art.
-* State of the art Generative AI applications.
+---
+
+## Evaluation
+
+The evaluation is organized by modules and combines quizzes, theoretical–practical reports, and a final integrative project. The final grade corresponds to the weighted sum of the following components:
+
+| Module / Event | Evaluation | % | Timeline | Dates |
+|---------------|------------|---|----------|-------|
+| **Module 1 – Foundations, Search & Planning** | Quiz | 5 | Week 4 | August 4 to 9 |
+| | Theoretical and practical report | 20 | Week 5 | August 11 to 16 |
+| **Module 2 – The Learning Lens** | Quiz | 5 | Week 8 | September 1 to 6 |
+| | Theoretical and practical report | 20 | Week 9 | September 8 to 13 |
+| **Module 3 – Contemporary Practice** | Quiz | 5 | Week 12 | September 29 to October 4 |
+| | Theoretical and practical report | 20 | Week 13 | October 13 to 18 |
+| **Module 4 – Evaluation & Integration** | Final project and report (AI Agent) | 25 | Week 16 | November 3 to 8 |
+
+---
+
+### Notes for students
+
+- Reports emphasize **both conceptual understanding and implementation**.
+- The final project integrates **Generative AI, agents, and system-level design**.
+- The use of **Generative AI tools is permitted**, subject to transparency and academic integrity, as stated in the course policies.
 
 
 ## Evaluation
