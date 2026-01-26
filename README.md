@@ -49,7 +49,20 @@ The evaluation is organized by modules and combines quizzes, theoretical–pract
 - Homework:
   - Review the [numpy notebook](Lecture01/notebooks/tools_numpy.ipynb)
   - Review the [pandas notebook](Lecture01/notebooks/tools_pandas.ipynb)
-  - Review the [matplotlib notebook](Lecture01/notebooks/tools_matplotlib.ipynb) 
+  - Review the [matplotlib notebook](Lecture01/notebooks/tools_matplotlib.ipynb)
+
+### Lecture 02
+- [Lecture02.pdf](Lecture02/Lecture_02.pdf) — Search Problems and Uninformed Search
+
+- Notebooks:
+  - [Vacuum Agent](Lecture02/notebooks/Vacuum_Agent.ipynb)
+  - [Breadth-First Search](Lecture02/notebooks/BreadthFirstSearch_Tutorial.ipynb)
+  - [Best-First Search (Uniform-Cost)](Lecture02/notebooks/BestFirstSearch_Tutorial.ipynb)
+  - [Iterative Deepening Search](Lecture02/notebooks/Interactive_Depth_Search_Tutorial.ipynb)
+  - [Search Methods Comparison](Lecture02/notebooks/Comparativo_BFS_UCS_IDS.ipynb)
+
+- Homework:
+  - Research Iterative Deepening Search (IDDFS)
 
 # Resources:
 * Computational resources: I strongly recommend creating (free) accounts on the following platforms:
