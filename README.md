@@ -64,6 +64,20 @@ The evaluation is organized by modules and combines quizzes, theoretical–pract
 - Homework:
   - Research Iterative Deepening Search (IDDFS)
 
+### Lecture 03
+- [Lecture03.pdf](Lecture03/Lecture_03.pdf) — Informed Search: A* and Variants
+
+- Notebooks:
+  - [Maze Problem](Lecture03/notebooks/0.Maze_problem.ipynb)
+  - [Recursive Best-First Search (RBFS)](Lecture03/notebooks/RBFS.ipynb)
+
+- Supporting Material:
+  - [Maze Problem Description](Lecture03/PROBLEMA DE MAZE.docx)
+
+- Homework:
+  - Compare A* and RBFS in terms of completeness, optimality, time complexity, and memory consumption.
+  - Experiment with different heuristic functions for the maze problem and analyze their impact on performance.
+
 # Resources:
 * Computational resources: I strongly recommend creating (free) accounts on the following platforms:
   - [Google collaborative](https://colab.research.google.com/)
