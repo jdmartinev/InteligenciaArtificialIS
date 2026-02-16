@@ -1,3 +1,5 @@
+# Module 1
+
 ## 📘 Workshop 1  
 
 **Repository:**  
