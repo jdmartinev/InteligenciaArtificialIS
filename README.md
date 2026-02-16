@@ -94,6 +94,25 @@ The evaluation is organized by modules and combines quizzes, theoretical–pract
   - Design and implement a fitness function for the planning or scheduling problem.
   - Analyze how population size, mutation rate, and crossover strategy affect convergence.
   - Discuss the trade-offs between solution quality and computational cost.
+ 
+### Lecture 05
+- [Lecture05.pdf](Lecture05/Lecture_05.pdf) — Fundamentals of Machine Learning
+
+- Notebooks:
+  - [Data Preprocessing Exercise](Lecture05/notebooks/PreprocessingExercise.ipynb)
+  - [Data Preprocessing A](Lecture05/notebooks/Preprocesamiento_de_datos_a.ipynb)
+  - [Data Preprocessing B](Lecture05/notebooks/Preprocesamiento_de_datos_b.ipynb)
+  - [Linear Regression Exercise](Lecture05/notebooks/linear-regression-exercise1.ipynb)
+  - [Logistic Regression Exercise](Lecture05/notebooks/logistic-regression-exercise.ipynb)
+  - [Customer Churn Prediction](Lecture05/notebooks/Predicción_de_abandono_de_clientes.ipynb)
+
+- Dataset:
+  - [`data/`](Lecture05/data/) — Datasets used for preprocessing and modeling exercises
+
+- Homework:
+  - Compare linear and logistic regression in terms of assumptions, use cases, and output interpretation.
+  - Build a preprocessing pipeline and justify each transformation applied to the data.
+  - Evaluate a simple model using appropriate metrics and discuss potential sources of bias or variance.
 
 # Resources:
 * Computational resources: I strongly recommend creating (free) accounts on the following platforms:
