@@ -77,6 +77,23 @@ The evaluation is organized by modules and combines quizzes, theoretical–pract
 - Homework:
   - Compare A* and RBFS in terms of completeness, optimality, time complexity, and memory consumption.
   - Experiment with different heuristic functions for the maze problem and analyze their impact on performance.
+ 
+### Lecture 04
+- [Lecture04.pdf](Lecture04/Lecture_04.pdf) — Metaheuristics: Genetic Algorithms and Optimization
+
+- Notebooks:
+  - [Genetic Algorithm Planning — Tutorial](Lecture04/notebooks/tutorial_AG_planning.ipynb)
+  - [Genetic Algorithm Planning with DEAP](Lecture04/notebooks/tutorial_AG_planning_DEAP.ipynb)
+  - [Genetic Algorithm Scheduling](Lecture04/notebooks/tutorial_AG_scheduling.ipynb)
+  - [GA Planning Exercise](Lecture04/notebooks/ejercicio_AG_planning.ipynb)
+
+- Supporting Material:
+  - [Schedule Construction — First 3 Iterations](Lecture04/build_schedule_first_3_iterations.md)
+
+- Homework:
+  - Design and implement a fitness function for the planning or scheduling problem.
+  - Analyze how population size, mutation rate, and crossover strategy affect convergence.
+  - Discuss the trade-offs between solution quality and computational cost.
 
 # Resources:
 * Computational resources: I strongly recommend creating (free) accounts on the following platforms:
