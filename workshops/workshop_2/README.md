@@ -106,6 +106,7 @@ Genere una muestra aleatoria con valores aproximados a los reales e ingrésela a
 
 - **Nombre:** Faces: Age Detection from Images
 - **Fuente:** Kaggle – [arashnic/faces-age-detection-dataset](https://www.kaggle.com/datasets/arashnic/faces-age-detection-dataset)
+- Full dataset: [https://susanqq.github.io/UTKFace/]
 - **Descripción:** Conjunto de imágenes faciales etiquetadas con la edad del sujeto. El objetivo es entrenar un modelo que estime la edad a partir de los píxeles de la imagen.
 
 ### Instrucciones
