@@ -15,7 +15,7 @@ El taller se divide en **dos partes principales**:
 
 ## 📊 Parte 1 — Señales EMG y Machine Learning Clásico
 
-📄 Ver: README_P1.md
+📄 Ver: [README_P1.md](Part1/README.md)
 
 En esta parte trabajarás con **señales biomédicas (EMG)** para detectar fatiga muscular.
 
@@ -34,7 +34,7 @@ señal continua → segmentación → features → tabla → modelo ML
 
 ## 🖼️ Parte 2 — Imágenes y Deep Learning
 
-📄 Ver: README_P2.md
+📄 Ver: [README_P2.md](Part1/README.md)
 
 En esta parte trabajarás con **imágenes (dataset UTKFace)** para predecir la edad usando redes neuronales convolucionales.
 
