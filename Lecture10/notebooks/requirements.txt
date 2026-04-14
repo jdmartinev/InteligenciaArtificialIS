@@ -15,7 +15,7 @@ langchain-core
 # 04b - LLMs con Hugging Face
 # ============================================================
 transformers
-torch
+#torch
 accelerate
 huggingface_hub
  
