@@ -155,4 +155,4 @@ Para cerrar, un ejemplo end-to-end. El usuario pregunta el precio del BTC y cuá
 
 ---
 
-*Figuras generadas para el módulo de Agentes — SI7011 Deep Learning / MCDA · EAFIT*
+
