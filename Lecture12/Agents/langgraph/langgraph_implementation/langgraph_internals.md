@@ -263,4 +263,4 @@ Con esta base, el siguiente notebook introduce dos extensiones del mismo grafo:
 
 ---
 
-*Figuras generadas para el módulo de Agentes — SI7011 Deep Learning / MCDA · EAFIT*
+
