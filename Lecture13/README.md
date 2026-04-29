@@ -232,3 +232,10 @@ A lo largo del desarrollo de este agente, aprenderemos a:
 - Integrar todo en experimentos reproducibles  
 
 Este será el hilo conductor para entender cómo construir y mejorar agentes de IA en escenarios reales.
+
+## Evaluación de modelos vs sistemas
+
+En la siguiente sección profundizamos en la diferencia entre evaluación de modelos y sistemas:
+
+➡️ [Evaluación de modelos vs sistemas](02-model-vs-system.md)
+
