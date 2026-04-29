@@ -115,7 +115,7 @@ Este enfoque no solo mejora la calidad del agente, sino que permite escalar su d
 
 ## Caso de estudio: Data Analyzer Agent
 
-![Data Analyzer Agent](figs/data_analyzer_agent.png)
+<img src="figs/data_analyzer_agent.png" width="60%">
 
 **Figura 3.** Arquitectura de un agente analizador de datos basado en herramientas. Un *router* decide qué herramienta utilizar en función de la consulta del usuario, apoyándose en memoria para mantener el contexto.
 
