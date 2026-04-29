@@ -112,3 +112,123 @@ Evaluar agentes de IA requiere cambiar la forma en que pensamos los sistemas:
 → a sistemas **observables e interpretables**
 
 Este enfoque no solo mejora la calidad del agente, sino que permite escalar su desarrollo de manera controlada y reproducible.
+
+## Caso de estudio: Data Analyzer Agent
+
+![Data Analyzer Agent](figs/data_analyzer_agent.png)
+
+**Figura 3.** Arquitectura de un agente analizador de datos basado en herramientas. Un *router* decide qué herramienta utilizar en función de la consulta del usuario, apoyándose en memoria para mantener el contexto.
+
+Hasta ahora hemos discutido cómo evaluar agentes de forma general. En esta sección aterrizamos estos conceptos en un sistema concreto: un **Data Analyzer Agent**.
+
+Este agente tiene como objetivo responder preguntas del usuario mediante análisis de datos. Para ello, no depende únicamente de generación de texto, sino de la ejecución de herramientas especializadas.
+
+---
+
+## ¿Qué hace este agente?
+
+Dado un *prompt* del usuario, el agente:
+
+1. **Interpreta la consulta**  
+   Determina la intención (por ejemplo: consulta, agregación, filtrado, visualización).
+
+2. **Selecciona una herramienta (router)**  
+   Decide cuál de las herramientas disponibles es más adecuada:
+   - consultas a base de datos  
+   - transformaciones de datos  
+   - generación de gráficos  
+   - cálculos estadísticos  
+
+3. **Extrae parámetros**  
+   Traduce la intención del usuario en argumentos estructurados (por ejemplo: columnas, filtros, rangos de tiempo).
+
+4. **Ejecuta la herramienta**  
+   Obtiene resultados intermedios a partir de datos reales.
+
+5. **Genera una respuesta**  
+   Presenta los resultados de forma interpretable para el usuario.
+
+6. **Mantiene contexto (memoria)**  
+   Permite encadenar consultas y mantener coherencia en la conversación.
+
+---
+
+## ¿Qué vamos a aprender evaluando este agente?
+
+Este caso de estudio nos permite introducir una evaluación más rica que en los ejemplos anteriores.
+
+### 1. Evaluación del router (decisión)
+
+- ¿El agente selecciona la herramienta correcta?
+- ¿Qué tan consistente es esta decisión?
+
+Métricas:
+- Accuracy de selección de herramienta  
+- Confusión entre herramientas  
+
+---
+
+### 2. Evaluación de parámetros
+
+- ¿Los argumentos extraídos son correctos?
+- ¿Reflejan correctamente la intención del usuario?
+
+Evaluación:
+- Exact match  
+- Validación semántica  
+
+---
+
+### 3. Evaluación de herramientas
+
+- ¿Cada herramienta funciona correctamente de forma aislada?
+- ¿Produce resultados esperados?
+
+Esto permite aislar errores del sistema:
+- error de herramienta vs error del agente  
+
+---
+
+### 4. Evaluación de la trayectoria
+
+- ¿El agente toma una secuencia eficiente de decisiones?
+- ¿Evita pasos innecesarios o redundantes?
+
+Esto introduce:
+> **evaluación del proceso**, no solo del resultado
+
+---
+
+### 5. Evaluación end-to-end
+
+Finalmente:
+- ¿La respuesta final es correcta y útil para el usuario?
+
+Pero ahora, a diferencia de antes:
+- podemos **atribuir errores a componentes específicos**
+
+---
+
+## Idea clave
+
+> Este agente introduce una nueva dimensión: **la toma de decisiones estructurada**.
+
+No solo evaluamos:
+- qué información usa el agente  
+- qué texto genera  
+
+Sino también:
+- **qué acciones decide ejecutar**
+
+---
+
+## Conexión con el curso
+
+A lo largo del desarrollo de este agente, aprenderemos a:
+
+- Instrumentar el sistema para capturar trazas  
+- Evaluar cada componente de forma independiente  
+- Diseñar evaluadores específicos (router, tools, output)  
+- Integrar todo en experimentos reproducibles  
+
+Este será el hilo conductor para entender cómo construir y mejorar agentes de IA en escenarios reales.
