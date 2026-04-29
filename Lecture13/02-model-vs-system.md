@@ -191,18 +191,13 @@ Para evaluar estos sistemas se pueden usar:
 
 Pequeños cambios pueden generar efectos inesperados:
 
+<img src="figs/prompt_regression.svg" width="600">
+
+**Figura 6.** Cambios pequeños en el sistema (por ejemplo, modificar un prompt) pueden mejorar algunos casos mientras degradan otros. Este fenómeno se conoce como regresión.
+
+Por ejemplo:
 - mejorar un caso → empeorar otro  
 - cambiar un prompt → afectar múltiples outputs  
-
-Por esto es clave:
-
-> mantener un conjunto representativo de casos de prueba
-
-Estos datasets permiten:
-- detectar regresiones  
-- medir mejoras  
-- iterar de forma controlada  
-
 ---
 
 ## Evaluación iterativa
