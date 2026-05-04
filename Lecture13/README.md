@@ -154,6 +154,8 @@ graph_builder.add_edge("tools", "agent")         # vuelve al LLM con resultados
 
 La función `should_continue` es el router: si el LLM genera `tool_calls` en su respuesta, el grafo va al nodo `tools`; si no, termina.
 
+![Arquitectura de agente](figs/web_search_agent_graph.png)
+
 ---
 
 ### Dataset de evaluación
