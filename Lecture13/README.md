@@ -154,21 +154,21 @@ graph_builder.add_edge("tools", "agent")         # vuelve al LLM con resultados
 
 La función `should_continue` es el router: si el LLM genera `tool_calls` en su respuesta, el grafo va al nodo `tools`; si no, termina.
 
-![Arquitectura de agente](figs/web_search_agent_graph.png)
-
 ---
 
 ### Dataset de evaluación
 
 El dataset contiene preguntas de dos tipos, diseñadas para probar si el agente sabe *cuándo* usar la tool:
 
-| Tipo | Ejemplo | `expected_tools` |
-|---|---|---|
-| Conocimiento general | ¿Cuántas lunas tiene Marte? | `[]` |
-| Información actualizada | ¿Quién es el CEO actual de NVIDIA? | `["web_search"]` |
-| Conocimiento general | ¿Cuál es la capital de Colombia? | `[]` |
-| Información actualizada | ¿Cuándo fue fundada EAFIT? | `["web_search"]` |
-| Conocimiento general | ¿Cuál es la fórmula del agua? | `[]` |
+| Tipo | Ejemplo | `expected_tools` | `expected_content` |
+|---|---|---|---|
+| Conocimiento general | ¿Cuántas lunas tiene Marte? | `[]` | — |
+| Información actualizada | ¿Quién es el CEO actual de NVIDIA? | `["web_search"]` | `["Jensen Huang", "NVIDIA", "CEO"]` |
+| Conocimiento general | ¿Cuál es la capital de Colombia? | `[]` | — |
+| Información actualizada | ¿Cuándo fue fundada EAFIT? | `["web_search"]` | `["EAFIT", "1960", "Medellín"]` |
+| Conocimiento general | ¿Cuál es la fórmula del agua? | `[]` | — |
+
+El campo `expected_content` solo aplica a preguntas que usan `web_search` — define los términos clave que deben aparecer en los resultados de búsqueda para que el retrieval sea considerado exitoso.
 
 Esta distinción es clave: un agente que siempre llama `web_search` puede dar respuestas correctas pero es **ineficiente**.
 
@@ -192,7 +192,41 @@ evaluate_tool_use(tools_called=["web_search"], expected_tools=[])
 
 ---
 
-#### 2. Trajectory match (agentevals)
+#### 2. Retrieval quality (determinístico)
+
+Evalúa si los resultados de `web_search` contienen la información necesaria para responder la pregunta. Opera sobre los mensajes `role: tool` de la trayectoria.
+
+```python
+def evaluate_retrieval(trajectory: list, expected_content: list) -> dict:
+    tool_results = " ".join(
+        msg["content"] for msg in trajectory if msg["role"] == "tool"
+    ).lower()
+
+    if not tool_results:
+        return {"score": 0.0, "comment": "❌ No se llamó ninguna tool"}
+
+    found = [term for term in expected_content if term.lower() in tool_results]
+    score = len(found) / len(expected_content)
+
+    return {
+        "score": score,
+        "found": found,
+        "missing": [t for t in expected_content if t not in found],
+        "comment": f"✅ {len(found)}/{len(expected_content)} términos encontrados"
+    }
+```
+
+Esta métrica es un **Recall@expected_content**: qué fracción de los términos esperados aparecieron en los resultados de búsqueda.
+
+- `score = 1.0` → el retrieval trajo toda la información necesaria
+- `score = 0.5` → trajo la mitad — la respuesta puede ser incompleta
+- `score = 0.0` → no llamó la tool o los resultados son irrelevantes
+
+**Cuándo usarlo:** para separar errores de retrieval de errores de generación. Si el retrieval score es bajo pero el LLM-as-judge es alto, el modelo está compensando con su conocimiento previo — lo cual es frágil.
+
+---
+
+#### 3. Trajectory match (agentevals)
 
 Compara la secuencia de pasos del agente contra una trayectoria de referencia. Evalúa el **proceso**, no solo el resultado.
 
@@ -234,14 +268,16 @@ llm_judge = create_trajectory_llm_as_judge(
 
 Al correr los tres evaluadores sobre el dataset de 5 preguntas:
 
-| Pregunta | tool_use | trajectory | llm_judge |
-|---|---|---|---|
-| ¿Lunas de Marte? | 0.0 | False | True |
-| ¿CEO de NVIDIA? | 1.0 | True | True |
-| ¿Capital de Colombia? | 0.0 | False | True |
-| ¿Fundación EAFIT? | 1.0 | True | True |
-| ¿Fórmula del agua? | 0.0 | False | True |
-| **Promedio** | **0.40** | **0.40** | **1.00** |
+| Pregunta | tool_use | retrieval | trajectory | llm_judge |
+|---|---|---|---|---|
+| ¿Lunas de Marte? | 0.0 | — | False | True |
+| ¿CEO de NVIDIA? | 1.0 | 1.0 | True | True |
+| ¿Capital de Colombia? | 0.0 | — | False | True |
+| ¿Fundación EAFIT? | 1.0 | 0.67 | True | True |
+| ¿Fórmula del agua? | 0.0 | — | False | True |
+| **Promedio** | **0.40** | **0.84** | **0.40** | **1.00** |
+
+> El promedio de retrieval se calcula solo sobre las preguntas que requieren búsqueda (n=2).
 
 ### Interpretación
 
@@ -250,6 +286,7 @@ Estos resultados ilustran perfectamente la diferencia entre los evaluadores:
 - **LLM-as-judge = 1.0** — el agente siempre dio respuestas correctas
 - **Tool use = 0.40** — en las 3 preguntas de conocimiento general, el agente llamó `web_search` innecesariamente
 - **Trajectory match = 0.40** — el proceso no fue el esperado en esas mismas preguntas
+- **Retrieval = 0.84** — cuando sí buscó, los resultados fueron mayormente relevantes; la pregunta de EAFIT no encontró "Medellín" en los snippets
 
 > Un agente puede tener respuestas correctas pero un proceso ineficiente.  
 > El `llm_as_judge` evalúa si la trayectoria es *razonable*, no si es *óptima*.  
@@ -267,7 +304,7 @@ Los mismos evaluadores se pueden registrar en LangSmith para tener un dashboard 
 experiment = client.evaluate(
     agent_target,
     data="agent-evals-demo",
-    evaluators=[eval_tool_use, eval_trajectory, eval_llm_judge],
+    evaluators=[eval_tool_use, eval_retrieval, eval_trajectory, eval_llm_judge],
     experiment_prefix="llama-3.1-70b",
     max_concurrency=1,
 )
@@ -282,6 +319,7 @@ Esto permite comparar distintas versiones del agente (diferentes modelos, difere
 | Componente evaluado | Evaluador | Pregunta que responde |
 |---|---|---|
 | Decisión de routing | `tool_use` | ¿Llamó las tools correctas? |
+| Calidad del retrieval | `retrieval_quality` | ¿Los resultados de búsqueda son relevantes? |
 | Secuencia de pasos | `trajectory_match` | ¿El proceso fue el esperado? |
 | Calidad general | `llm_as_judge` | ¿La trayectoria fue razonable? |
 
