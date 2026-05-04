@@ -265,5 +265,5 @@ En el Web Search Agent aplicamos este enfoque con cuatro evaluadores que cubren 
 
 ## ⏭️ Siguiente
 
-➡️ [Workshop: evaluación de tu propio agente](03-workshop.md)
+➡️ [Evaluators: Deep dive](03-evaluators-deep-dive.md)
 
