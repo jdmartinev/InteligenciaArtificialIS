@@ -77,6 +77,25 @@ Reglas:
 )
 ```
 
+### Construye el grafo LangGraph
+
+El notebook tiene un bloque con comentarios que explican cada instrucción del grafo. Completa los argumentos marcados con `???`:
+
+```python
+graph_builder = StateGraph(AgentState)
+graph_builder.add_node("agent", call_model)   # nodo del LLM
+graph_builder.add_node("tools", ToolNode(TOOLS))  # nodo ejecutor de tools
+graph_builder.set_entry_point("agent")        # siempre empieza en el agente
+graph_builder.add_conditional_edges("agent", should_continue)  # router
+graph_builder.add_edge("tools", "agent")      # tras ejecutar tools → vuelve al agente
+```
+
+El flujo resultante es:
+```
+Usuario → agent → ¿tool_calls? → SÍ → tools → agent → ...
+                               → NO → END
+```
+
 ### Prueba manual
 
 Antes de pasar a la evaluación, prueba el agente con al menos 3 preguntas que cubran todos los casos:
@@ -175,7 +194,7 @@ No avances a la Parte 3 hasta que esta celda corra sin errores.
 
 ### ¿Qué tienes que hacer?
 
-Implementar la función `evaluate_tool_use` y configurar los otros dos evaluadores.
+Implementar la función `evaluate_tool_use` y configurar los otros tres evaluadores.
 
 ### 3.1 evaluate_tool_use (TODO obligatorio)
 
@@ -344,40 +363,46 @@ Busca patrones:
 - Los resultados de búsqueda sí llegaron, pero el LLM los ignoró y respondió desde su conocimiento
 - Este es el caso más peligroso: la respuesta puede ser correcta hoy pero incorrecta mañana si el dato cambia
 
+### LangSmith (opcional)
+
+Si tienes configurado `LANGSMITH_API_KEY`, las secciones 4.3 y 4.4 del notebook suben tu experimento al dashboard automáticamente. Cada evaluador aparece como columna independiente y puedes comparar distintas versiones del agente sobre el mismo dataset.
+
+El dataset se crea con nombre único por estudiante (`workshop-{USER}-evals`) para evitar colisiones.
+
 ### Preguntas de reflexión
 
 Responde estas preguntas en una celda Markdown del notebook:
 
 1. ¿Cuál fue el evaluador con el score más bajo? ¿Por qué crees que fue así?
 
-2. ¿Hubo algún caso donde `llm_judge` fue alto pero los evaluadores determinísticos fueron bajos? ¿Qué significa eso?
+2. ¿Hubo algún caso donde los scores del LLM-as-judge fueron altos pero los evaluadores determinísticos fueron bajos? ¿Qué significa eso?
 
-3. ¿Qué cambio específico harías en el system prompt para mejorar el score más bajo? Formula la hipótesis antes de implementarla.
+3. Si `retrieval_score` fue bajo en alguna pregunta: ¿fue problema del query que construyó el LLM, o los términos en `expected_content` eran demasiado restrictivos? ¿Cómo lo distinguirías?
 
-4. Si tuvieras que agregar una cuarta tool a tu agente, ¿qué agregarías? ¿Cómo modificarías el dataset para evaluarla?
+4. ¿Qué cambio específico harías en el system prompt para mejorar el score más bajo? Formula la hipótesis antes de implementarla.
+
+5. Si `retrieval_score` fue alto pero `faithfulness` fue bajo: ¿qué implica eso? ¿Es un problema grave?
 
 ### Mejora iterativa (bonus)
 
-Si tienes tiempo, implementa el cambio que propusiste en la pregunta 3, vuelve a correr la evaluación y compara los resultados:
+Si tienes tiempo, implementa el cambio que propusiste en la pregunta 4, vuelve a correr la evaluación y compara los resultados:
 
 ```python
-# Guarda los resultados originales
 results_v1 = pd.DataFrame(eval_results)
 
-# Modifica el system prompt
 SYSTEM_PROMPT = SystemMessage(content="... versión mejorada ...")
-
-# Recompila el agente
 llm_with_tools = llm.bind_tools(TOOLS, parallel_tool_calls=False)
 agent = graph_builder.compile()
 
-# Corre de nuevo
 eval_results_v2 = run_full_eval(eval_dataset, sleep_between=8)
 results_v2 = pd.DataFrame(eval_results_v2)
 
-# Compara
-print("V1 promedios:", results_v1[results_v1["status"]=="ok"][numeric_cols].mean())
-print("V2 promedios:", results_v2[results_v2["status"]=="ok"][numeric_cols].mean())
+compare_cols = ["tool_use_score", "trajectory_match", "correctness",
+                "efficiency", "faithfulness"]
+ok_v1 = results_v1[results_v1["status"] == "ok"]
+ok_v2 = results_v2[results_v2["status"] == "ok"]
+print("V1:", ok_v1[compare_cols].mean().round(2).to_dict())
+print("V2:", ok_v2[compare_cols].mean().round(2).to_dict())
 ```
 
 Este es el ciclo de *evaluation-driven development* aplicado en práctica.
@@ -389,13 +414,14 @@ Este es el ciclo de *evaluation-driven development* aplicado en práctica.
 Al finalizar el workshop, tu notebook debe tener:
 
 - [ ] Al menos 2 tools definidas con docstrings claros
+- [ ] Grafo LangGraph construido correctamente
 - [ ] System prompt personalizado para tu dominio
 - [ ] Dataset de mínimo 8 ejemplos con la distribución correcta
 - [ ] `evaluate_tool_use` implementada y con los 4 tests pasando
 - [ ] `expected_content` poblado correctamente para preguntas con `web_search`
 - [ ] Loop completo corrido sin errores
-- [ ] Tabla de resultados con los 6 scores (incluyendo `retrieval_score`)
-- [ ] Preguntas de reflexión respondidas en una celda Markdown
+- [ ] Dos tablas de resultados (determinísticos + LLM-as-judge)
+- [ ] 5 preguntas de reflexión respondidas en una celda Markdown
 
 ---
 
