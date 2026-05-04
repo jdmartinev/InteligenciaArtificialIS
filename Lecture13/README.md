@@ -154,9 +154,6 @@ graph_builder.add_edge("tools", "agent")         # vuelve al LLM con resultados
 
 La función `should_continue` es el router: si el LLM genera `tool_calls` en su respuesta, el grafo va al nodo `tools`; si no, termina.
 
-![Evaluación por componentes](figs/web_search_agent_graph.png)
-
-
 ---
 
 ### Dataset de evaluación
@@ -255,15 +252,77 @@ Modos disponibles:
 
 Usa un LLM para juzgar si la trayectoria fue razonable. No necesita ground truth exacto.
 
+En lugar de usar el prompt genérico de `agentevals`, implementamos un **juez multidimensional** con un prompt personalizado y salida estructurada con Pydantic:
+
 ```python
-llm_judge = create_trajectory_llm_as_judge(
-    prompt=TRAJECTORY_ACCURACY_PROMPT,
-    judge=judge_llm,
-)
-# → {"key": "trajectory_accuracy", "score": True, "comment": "..."}
+from pydantic import BaseModel
+
+# Esquema Pydantic que fuerza al LLM a retornar JSON estructurado
+class EvalScores(BaseModel):
+    correctness: float   # ¿La respuesta es correcta?
+    efficiency: float    # ¿Usó las tools mínimas necesarias?
+    faithfulness: float  # ¿La respuesta viene de los resultados de búsqueda?
+    comment: str         # Explicación del score
+
+CUSTOM_EVAL_PROMPT = """You are an expert evaluator of AI agent trajectories.
+Evaluate the following agent trajectory on THREE dimensions.
+
+<Trajectory>
+{outputs}
+</Trajectory>
+
+Score each dimension from 0.0 to 1.0:
+
+1. **Correctness**: Is the final answer factually correct and complete?
+   - 1.0: Correct and complete | 0.5: Partially correct | 0.0: Wrong or missing
+
+2. **Efficiency**: Did the agent use the minimum tools necessary?
+   - 1.0: Only called tools when truly needed
+   - 0.5: Called some unnecessary tools
+   - 0.0: Wrong tool usage pattern
+
+3. **Faithfulness**: Is the final answer grounded in the tool results?
+   - 1.0: Fully based on retrieved data
+   - 0.5: Mixes retrieved data with assumptions
+   - 0.0: Ignores tool results or hallucinates
+
+Respond ONLY with JSON:
+{{
+  "correctness": <float 0.0-1.0>,
+  "efficiency": <float 0.0-1.0>,
+  "faithfulness": <float 0.0-1.0>,
+  "comment": "<brief explanation>"
+}}"""
+
+
+def multidim_judge(trajectory: list) -> dict:
+    # with_structured_output obliga al LLM a respetar el esquema Pydantic
+    structured_judge = llm.with_structured_output(EvalScores)
+    prompt = CUSTOM_EVAL_PROMPT.format(
+        outputs=json.dumps(trajectory, indent=2, ensure_ascii=False)
+    )
+    result: EvalScores = structured_judge.invoke([HumanMessage(content=prompt)])
+    return {
+        "correctness": result.correctness,
+        "efficiency": result.efficiency,
+        "faithfulness": result.faithfulness,
+        "comment": result.comment,
+    }
 ```
 
-**Cuándo usarlo:** cuando no puedes definir una trayectoria de referencia perfecta, o cuando quieres evaluar la calidad general de la respuesta.
+`with_structured_output` garantiza que el LLM retorne siempre los tres scores como floats — sin necesidad de parsear texto libre ni manejar JSON mal formado.
+
+Ejemplo de output:
+```python
+{
+  "correctness": 1.0,
+  "efficiency": 0.0,   # buscó en web para una pregunta de conocimiento general
+  "faithfulness": 1.0,
+  "comment": "Respuesta correcta pero innecesariamente buscó en web."
+}
+```
+
+**Cuándo usarlo:** cuando no puedes definir una trayectoria de referencia perfecta, o cuando quieres evaluar dimensiones cualitativas que los evaluadores determinísticos no capturan.
 
 ---
 
