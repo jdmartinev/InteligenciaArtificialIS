@@ -36,7 +36,7 @@ Supongamos que un agente genera un mal resultado. ¿Dónde está el error?
 
 Sin visibilidad interna, todas estas causas se mezclan. Esto dificulta la mejora sistemática del sistema.
 
-Aquí es donde entra el concepto clásico de **análisis de errores**, adaptado a sistemas agenticos.
+Aquí es donde entra el concepto clásico de **análisis de errores**, adaptado a sistemas agénticos.
 
 ---
 
@@ -113,127 +113,182 @@ Evaluar agentes de IA requiere cambiar la forma en que pensamos los sistemas:
 
 Este enfoque no solo mejora la calidad del agente, sino que permite escalar su desarrollo de manera controlada y reproducible.
 
-## Caso de estudio: Data Analyzer Agent
+---
 
-<img src="figs/data_analyzer_agent.png" width="60%">
+## Caso de estudio: Web Search Agent
 
-**Figura 3.** Arquitectura de un agente analizador de datos basado en herramientas. Un *router* decide qué herramienta utilizar en función de la consulta del usuario, apoyándose en memoria para mantener el contexto.
+<img src="figs/agent_web_search.svg" width="100%">
 
-Hasta ahora hemos discutido cómo evaluar agentes de forma general. En esta sección aterrizamos estos conceptos en un sistema concreto: un **Data Analyzer Agent**.
+**Figura 3.** Arquitectura del agente implementado. El router (LLM) decide si invocar `web_search` o responder directamente desde su conocimiento, manteniendo el historial de mensajes como memoria implícita.
 
-Este agente tiene como objetivo responder preguntas del usuario mediante análisis de datos. Para ello, no depende únicamente de generación de texto, sino de la ejecución de herramientas especializadas.
+Hasta ahora hemos discutido cómo evaluar agentes de forma general. En esta sección aterrizamos estos conceptos en un sistema concreto que implementamos en `agent_evals.py`.
 
 ---
 
-## ¿Qué hace este agente?
+### ¿Qué hace este agente?
 
-Dado un *prompt* del usuario, el agente:
+El agente recibe una pregunta del usuario y decide si puede responder desde su conocimiento o si necesita buscar información actualizada en la web.
 
-1. **Interpreta la consulta**  
-   Determina la intención (por ejemplo: consulta, agregación, filtrado, visualización).
+```
+Usuario → Agente (LLM) → ¿necesita buscar? 
+                          SÍ → web_search (DDGS) → respuesta fundamentada
+                          NO → respuesta directa
+```
 
-2. **Selecciona una herramienta (router)**  
-   Decide cuál de las herramientas disponibles es más adecuada:
-   - consultas a base de datos  
-   - transformaciones de datos  
-   - generación de gráficos  
-   - cálculos estadísticos  
+**Tool disponible:**
 
-3. **Extrae parámetros**  
-   Traduce la intención del usuario en argumentos estructurados (por ejemplo: columnas, filtros, rangos de tiempo).
+| Tool | Cuándo se usa |
+|---|---|
+| `web_search` | Preguntas sobre eventos recientes, personas, empresas, datos que cambian |
 
-4. **Ejecuta la herramienta**  
-   Obtiene resultados intermedios a partir de datos reales.
+**Implementación en LangGraph:**
 
-5. **Genera una respuesta**  
-   Presenta los resultados de forma interpretable para el usuario.
+```python
+graph_builder = StateGraph(AgentState)
+graph_builder.add_node("agent", call_model)      # LLM decide
+graph_builder.add_node("tools", ToolNode(TOOLS)) # ejecuta web_search
+graph_builder.set_entry_point("agent")
+graph_builder.add_conditional_edges("agent", should_continue)
+graph_builder.add_edge("tools", "agent")         # vuelve al LLM con resultados
+```
 
-6. **Mantiene contexto (memoria)**  
-   Permite encadenar consultas y mantener coherencia en la conversación.
-
----
-
-## ¿Qué vamos a aprender evaluando este agente?
-
-Este caso de estudio nos permite introducir una evaluación más rica que en los ejemplos anteriores.
-
-### 1. Evaluación del router (decisión)
-
-- ¿El agente selecciona la herramienta correcta?
-- ¿Qué tan consistente es esta decisión?
-
-Métricas:
-- Accuracy de selección de herramienta  
-- Confusión entre herramientas  
+La función `should_continue` es el router: si el LLM genera `tool_calls` en su respuesta, el grafo va al nodo `tools`; si no, termina.
 
 ---
 
-### 2. Evaluación de parámetros
+### Dataset de evaluación
 
-- ¿Los argumentos extraídos son correctos?
-- ¿Reflejan correctamente la intención del usuario?
+El dataset contiene preguntas de dos tipos, diseñadas para probar si el agente sabe *cuándo* usar la tool:
 
-Evaluación:
-- Exact match  
-- Validación semántica  
+| Tipo | Ejemplo | `expected_tools` |
+|---|---|---|
+| Conocimiento general | ¿Cuántas lunas tiene Marte? | `[]` |
+| Información actualizada | ¿Quién es el CEO actual de NVIDIA? | `["web_search"]` |
+| Conocimiento general | ¿Cuál es la capital de Colombia? | `[]` |
+| Información actualizada | ¿Cuándo fue fundada EAFIT? | `["web_search"]` |
+| Conocimiento general | ¿Cuál es la fórmula del agua? | `[]` |
 
----
-
-### 3. Evaluación de herramientas
-
-- ¿Cada herramienta funciona correctamente de forma aislada?
-- ¿Produce resultados esperados?
-
-Esto permite aislar errores del sistema:
-- error de herramienta vs error del agente  
+Esta distinción es clave: un agente que siempre llama `web_search` puede dar respuestas correctas pero es **ineficiente**.
 
 ---
 
-### 4. Evaluación de la trayectoria
+### Los tres evaluadores
 
-- ¿El agente toma una secuencia eficiente de decisiones?
-- ¿Evita pasos innecesarios o redundantes?
+#### 1. Tool use (determinístico)
 
-Esto introduce:
-> **evaluación del proceso**, no solo del resultado
+Verifica si el agente llamó las tools correctas. No necesita LLM.
 
----
+```python
+evaluate_tool_use(tools_called=["web_search"], expected_tools=["web_search"])
+# → {"score": 1.0, "comment": "✅ Llamó las tools correctas"}
 
-### 5. Evaluación end-to-end
+evaluate_tool_use(tools_called=["web_search"], expected_tools=[])
+# → {"score": 0.0, "comment": "❌ Llamó tools cuando no debía"}
+```
 
-Finalmente:
-- ¿La respuesta final es correcta y útil para el usuario?
-
-Pero ahora, a diferencia de antes:
-- podemos **atribuir errores a componentes específicos**
+**Cuándo usarlo:** cuando las tools correctas están claramente definidas en el dataset.
 
 ---
 
-## Idea clave
+#### 2. Trajectory match (agentevals)
 
-> Este agente introduce una nueva dimensión: **la toma de decisiones estructurada**.
+Compara la secuencia de pasos del agente contra una trayectoria de referencia. Evalúa el **proceso**, no solo el resultado.
 
-No solo evaluamos:
-- qué información usa el agente  
-- qué texto genera  
+```python
+trajectory_evaluator = create_trajectory_match_evaluator(
+    trajectory_match_mode="subset",   # el agente debe llamar AL MENOS las tools esperadas
+    tool_args_match_mode="ignore",    # no compara argumentos, solo nombres de tools
+)
+```
 
-Sino también:
-- **qué acciones decide ejecutar**
+Modos disponibles:
+
+| Modo | Cuándo usarlo |
+|---|---|
+| `strict` | Mismo orden y mismas tools |
+| `unordered` | Mismas tools, cualquier orden |
+| `subset` | El agente llamó al menos las tools esperadas |
+| `superset` | El agente no llamó tools fuera de las esperadas |
 
 ---
 
-## Conexión con el curso
+#### 3. LLM-as-judge (agentevals)
 
-A lo largo del desarrollo de este agente, aprenderemos a:
+Usa un LLM para juzgar si la trayectoria fue razonable. No necesita ground truth exacto.
 
-- Instrumentar el sistema para capturar trazas  
-- Evaluar cada componente de forma independiente  
-- Diseñar evaluadores específicos (router, tools, output)  
-- Integrar todo en experimentos reproducibles  
+```python
+llm_judge = create_trajectory_llm_as_judge(
+    prompt=TRAJECTORY_ACCURACY_PROMPT,
+    judge=judge_llm,
+)
+# → {"key": "trajectory_accuracy", "score": True, "comment": "..."}
+```
 
-Este será el hilo conductor para entender cómo construir y mejorar agentes de IA en escenarios reales.
+**Cuándo usarlo:** cuando no puedes definir una trayectoria de referencia perfecta, o cuando quieres evaluar la calidad general de la respuesta.
+
+---
+
+### Resultados obtenidos
+
+Al correr los tres evaluadores sobre el dataset de 5 preguntas:
+
+| Pregunta | tool_use | trajectory | llm_judge |
+|---|---|---|---|
+| ¿Lunas de Marte? | 0.0 | False | True |
+| ¿CEO de NVIDIA? | 1.0 | True | True |
+| ¿Capital de Colombia? | 0.0 | False | True |
+| ¿Fundación EAFIT? | 1.0 | True | True |
+| ¿Fórmula del agua? | 0.0 | False | True |
+| **Promedio** | **0.40** | **0.40** | **1.00** |
+
+### Interpretación
+
+Estos resultados ilustran perfectamente la diferencia entre los evaluadores:
+
+- **LLM-as-judge = 1.0** — el agente siempre dio respuestas correctas
+- **Tool use = 0.40** — en las 3 preguntas de conocimiento general, el agente llamó `web_search` innecesariamente
+- **Trajectory match = 0.40** — el proceso no fue el esperado en esas mismas preguntas
+
+> Un agente puede tener respuestas correctas pero un proceso ineficiente.  
+> El `llm_as_judge` evalúa si la trayectoria es *razonable*, no si es *óptima*.  
+> Para detectar ineficiencia necesitas evaluadores determinísticos.
+
+**¿Cómo mejorar?** Ajustando el system prompt para que el agente no use `web_search` en preguntas de conocimiento general, y volviendo a evaluar — este es el ciclo de *evaluation-driven development*.
+
+---
+
+### Integración con LangSmith
+
+Los mismos evaluadores se pueden registrar en LangSmith para tener un dashboard visual y experimentos reproducibles:
+
+```python
+experiment = client.evaluate(
+    agent_target,
+    data="agent-evals-demo",
+    evaluators=[eval_tool_use, eval_trajectory, eval_llm_judge],
+    experiment_prefix="llama-3.1-70b",
+    max_concurrency=1,
+)
+```
+
+Esto permite comparar distintas versiones del agente (diferentes modelos, diferentes system prompts) en el mismo dashboard.
+
+---
+
+### Lo que aprendemos evaluando este agente
+
+| Componente evaluado | Evaluador | Pregunta que responde |
+|---|---|---|
+| Decisión de routing | `tool_use` | ¿Llamó las tools correctas? |
+| Secuencia de pasos | `trajectory_match` | ¿El proceso fue el esperado? |
+| Calidad general | `llm_as_judge` | ¿La trayectoria fue razonable? |
+
+Este agente es simple por diseño — una sola tool, preguntas factuales — para que el foco esté en entender los **evaluadores**, no en depurar el agente.
+
+En el workshop aplicarás estos mismos patrones a un agente más complejo que tú mismo diseñarás.
+
+---
 
 ## ⏭️ Siguiente
 
 ➡️ [Evaluación de modelos vs sistemas](02-model-vs-system.md)
-
