@@ -207,4 +207,4 @@ En el siguiente notebook extenderemos este grafo para añadir **memoria persiste
 
 ---
 
-*Figuras generadas para el módulo de Agentes — SI7011 Deep Learning / MCDA · EAFIT*
+*Figuras generadas para el módulo de Agentes*
