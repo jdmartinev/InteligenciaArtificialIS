@@ -117,7 +117,7 @@ Cuando evolucionamos de una aplicación basada en LLM a un **agente**, la comple
 
 Un agente es:
 
-> un sistema que utiliza un LLM para razonar y tomar acciones en nombre del usuario :contentReference[oaicite:0]{index=0}
+> un sistema que utiliza un LLM para razonar y tomar acciones en nombre del usuario
 
 ---
 
@@ -136,54 +136,48 @@ Un agente típicamente incluye:
 
 ---
 
-## Ejemplo: agente que planea un viaje
+## Ejemplo: Web Search Agent
 
-Supongamos que un agente debe ayudarte a reservar un viaje.
+<img src="figs/agent_web_search.svg" width="100%">
 
-El proceso incluye:
+**Figura 6.** Arquitectura del Web Search Agent implementado en `agent_evals.py`. El nodo `Agent` razona y decide si invocar `web_search` vía `should_continue()`. La capa de evaluación (naranja) opera sobre la trayectoria completa.
 
-1. Decidir qué herramienta usar  
-2. Construir la consulta adecuada  
-3. Llamar APIs (vuelos, hoteles, etc.)  
-4. Refinar la búsqueda  
-5. Generar una respuesta final  
+El agente que implementamos es un ejemplo concreto de este patrón. Dado un input del usuario, el LLM debe:
 
----
-
-## ¿Cómo evaluamos un agente?
-
-Aquí es donde entra la evaluación detallada por pasos:
-
-- ¿Seleccionó la herramienta correcta?  
-- ¿Usó los parámetros adecuados?  
-- ¿Interpretó correctamente el contexto del usuario?  
-- ¿La respuesta final es correcta y útil?  
-
-Un error puede aparecer en múltiples niveles:
-- herramienta incorrecta  
-- parámetros incorrectos  
-- uso incorrecto del contexto  
-- tono inadecuado  
-- información incorrecta  
+1. **Razonar**: ¿puedo responder desde mi conocimiento o necesito buscar?
+2. **Rutear**: ¿invoco `web_search` o respondo directamente?
+3. **Actuar**: ejecutar la búsqueda con DuckDuckGo
+4. **Sintetizar**: generar una respuesta fundamentada en los resultados
 
 ---
 
-## Idea clave
+## ¿Cómo evaluamos este agente?
 
-> No basta con evaluar la salida final.  
-> Hay que evaluar **cada decisión del agente**.
+Cada paso del proceso puede fallar de manera independiente:
+
+| Paso | Falla posible | Evaluador |
+|---|---|---|
+| Routing | Llamó `web_search` cuando no era necesario | `tool_use` |
+| Retrieval | Los resultados de búsqueda no son relevantes | `retrieval_quality` |
+| Proceso | La secuencia de pasos no fue la esperada | `trajectory_match` |
+| Síntesis | La respuesta final es incorrecta o incompleta | `llm_as_judge` |
+
+Esta tabla muestra por qué evaluar solo la salida final es insuficiente. Un agente puede dar una respuesta correcta por razones equivocadas — por ejemplo, ignorando los resultados de búsqueda y respondiendo desde su conocimiento previo.
 
 ---
 
-## Evaluación con humanos y LLMs
+### Resultado que obtuvimos
 
-Para evaluar estos sistemas se pueden usar:
+Al evaluar el Web Search Agent con los cuatro evaluadores:
 
-- **Human-in-the-loop**  
-  evaluación directa por personas  
+| Evaluador | Score | Interpretación |
+|---|---|---|
+| `tool_use` | 0.40 | El agente buscó en web cuando no era necesario (3 de 5 preguntas) |
+| `retrieval_quality` | 0.84 | Cuando sí buscó, los resultados fueron mayormente relevantes |
+| `trajectory_match` | 0.40 | El proceso no fue el esperado en las mismas 3 preguntas |
+| `llm_as_judge` | 1.00 | Todas las respuestas finales fueron correctas |
 
-- **LLM-as-a-judge**  
-  otro modelo evalúa la calidad de la respuesta  
+> El agente es **correcto pero ineficiente**. El LLM-as-judge no detecta la ineficiencia porque evalúa si la trayectoria es *razonable*, no si es *óptima*. Para eso necesitamos los evaluadores determinísticos.
 
 ---
 
@@ -193,40 +187,62 @@ Pequeños cambios pueden generar efectos inesperados:
 
 <img src="figs/prompt_regression.svg" width="600">
 
-**Figura 6.** Cambios pequeños en el sistema (por ejemplo, modificar un prompt) pueden mejorar algunos casos mientras degradan otros. Este fenómeno se conoce como regresión.
+**Figura 7.** Cambios pequeños en el sistema (por ejemplo, modificar un prompt) pueden mejorar algunos casos mientras degradan otros. Este fenómeno se conoce como **regresión**.
 
-Por ejemplo:
-- mejorar un caso → empeorar otro  
-- cambiar un prompt → afectar múltiples outputs  
+Por ejemplo, si ajustamos el system prompt para que el agente no use `web_search` en preguntas de conocimiento general:
+- el `tool_use` score mejora para esas preguntas  
+- pero puede degradar la decisión de búsqueda en otros casos  
+
+Por eso es fundamental tener un dataset de evaluación cubriendo **múltiples escenarios** antes de hacer cambios.
+
 ---
 
 ## Evaluación iterativa
 
 Al igual que en software tradicional, el desarrollo de agentes requiere iteración:
 
-- ejecutar evaluaciones  
-- analizar resultados  
-- ajustar prompts, herramientas o lógica  
-- repetir  
+```
+Evaluar → Analizar resultados → Ajustar (prompt, tools, lógica) → Repetir
+```
+
+En nuestro caso concreto:
+
+```
+tool_use = 0.40  →  mejorar system prompt  →  volver a evaluar
+```
 
 Sin embargo, a diferencia del software clásico:
-- el sistema es no determinista  
-- puede mejorar en un caso y empeorar en otro  
+- el sistema es no determinista — el mismo prompt puede dar resultados distintos en ejecuciones diferentes
+- puede mejorar en un caso y empeorar en otro
+
+Esto hace que los **experimentos en LangSmith** sean especialmente útiles: permiten comparar versiones del agente sobre el mismo dataset y detectar regresiones.
 
 ---
 
 ## Observabilidad y trazas
 
-Una práctica fundamental es recolectar **trazas (traces)** del comportamiento del agente:
+Una práctica fundamental es recolectar **trazas (traces)** del comportamiento del agente.
 
-- qué decisiones tomó  
-- qué herramientas usó  
-- qué pasos siguió  
+En nuestro agente, la función `run_agent_and_get_trajectory` captura exactamente esto:
 
-Esto permite:
-- entender el sistema  
-- depurar errores  
-- mejorar componentes específicos  
+```python
+{
+  "answer": "Jensen Huang es el CEO de NVIDIA",
+  "trajectory": [
+    {"role": "user",      "content": "¿Quién es el CEO actual de NVIDIA?"},
+    {"role": "assistant", "tool_calls": [{"function": {"name": "web_search", ...}}]},
+    {"role": "tool",      "content": "Jensen Huang, CEO of NVIDIA..."},
+    {"role": "assistant", "content": "Jensen Huang es el CEO de NVIDIA."}
+  ],
+  "tools_called": ["web_search"]
+}
+```
+
+Esta traza permite:
+- saber exactamente qué decidió el agente en cada paso  
+- depurar errores a nivel de componente  
+- alimentar los evaluadores de retrieval y trajectory  
+- registrar experimentos reproducibles en LangSmith  
 
 ---
 
@@ -243,4 +259,11 @@ Evaluar sistemas basados en LLM y agentes requiere un cambio de mentalidad:
 - de evaluación final  
 → a evaluación por componentes y trayectoria  
 
-Este enfoque es esencial para construir sistemas robustos en escenarios reales.
+En el Web Search Agent aplicamos este enfoque con cuatro evaluadores que cubren el routing, el retrieval, el proceso y la calidad final. Este mismo patrón escala a agentes más complejos con múltiples tools.
+
+---
+
+## ⏭️ Siguiente
+
+➡️ [Workshop: evaluación de tu propio agente](03-workshop.md)
+
