@@ -42,7 +42,7 @@ Visto desde arriba, el loop agéntico de LangGraph tiene tres actores y dos tipo
 
 El ciclo ocurre porque el edge `tools → agent` vuelve incondicionalmente al nodo `agent` después de ejecutar cualquier herramienta. El grafo termina cuando el router devuelve `"__end__"`.
 
-![LangGraph agentic loop exacto](figs/langgraph_implementation_02_langgraph_agentic_loop_exact.svg)
+![LangGraph agentic loop exacto](figs/02_langgraph_agentic_loop_exact.svg)
 
 > **Límite de iteraciones:** en el loop manual era `range(1, 11)`. En LangGraph se configura con `graph.compile(recursion_limit=10)`. Si se supera, LangGraph lanza `GraphRecursionError` en lugar de retornar silenciosamente.
 
@@ -62,7 +62,7 @@ Antes de construir el grafo, conviene mapear cada pieza del notebook a su rol en
 | `router` | Función que decide el siguiente nodo: `tools` o `END` |
 | `graph` | El `StateGraph` compilado — el agente ejecutable |
 
-![Componentes del notebook LangGraph](figs/langgraph_agents_02_langgraph_notebook_components.svg)
+![Componentes del notebook LangGraph](figs/02_langgraph_notebook_components.svg)
 
 > **Nota pedagógica:** en `part01` estos siete componentes estaban mezclados dentro de `run_agent()`. LangGraph los separa y los nombra — eso facilita entender, debuggear y extender el sistema.
 
@@ -92,7 +92,7 @@ TOOLS = [web_search]   # el objeto es función + schema + nombre
 
 El objeto resultante expone `.name`, `.description` y el JSON schema. `ToolNode` y `llm.bind_tools()` lo consumen directamente — sin `TOOL_REGISTRY` ni schemas manuales.
 
-![Abstracción de herramientas con @tool](figs/langgraph_agents_03_langgraph_tool_abstraction.svg)
+![Abstracción de herramientas con @tool](figs/03_langgraph_tool_abstraction.svg)
 
 > **Lo que desaparece:** el `TOOL_REGISTRY` dict y los JSON schemas manuales. El decorador `@tool` hace ese trabajo inferiendo el schema desde el docstring y los tipos.
 
@@ -117,7 +117,7 @@ graph = builder.compile()               # 5. produce el agente ejecutable
 
 `StateGraph(MessagesState)` le dice a LangGraph que el estado es una lista de mensajes. Eso es suficiente para que el framework gestione la acumulación del historial en cada iteración — sin `messages.append(...)` manual.
 
-![Construcción del grafo](figs/langgraph_agents_04_langgraph_graph_construction.svg)
+![Construcción del grafo](figs/_04_langgraph_graph_construction.svg)
 
 > **El ciclo está en los edges, no en el código.** `tools → agent` es la línea que reemplaza el `continue` del `for` loop de `part01`. La recursión termina cuando el router devuelve `END`.
 
