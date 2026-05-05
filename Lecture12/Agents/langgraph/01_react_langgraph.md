@@ -117,7 +117,7 @@ graph = builder.compile()               # 5. produce el agente ejecutable
 
 `StateGraph(MessagesState)` le dice a LangGraph que el estado es una lista de mensajes. Eso es suficiente para que el framework gestione la acumulación del historial en cada iteración — sin `messages.append(...)` manual.
 
-![Construcción del grafo](figs/_04_langgraph_graph_construction.svg)
+![Construcción del grafo](figs/04_langgraph_graph_construction.svg)
 
 > **El ciclo está en los edges, no en el código.** `tools → agent` es la línea que reemplaza el `continue` del `for` loop de `part01`. La recursión termina cuando el router devuelve `END`.
 
