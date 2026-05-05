@@ -26,7 +26,7 @@ En el loop manual, el flujo está codificado en Python imperativo: un `for`, un 
 
 En LangGraph, el flujo está codificado como **edges del grafo**. Cambiar el comportamiento significa añadir o redirigir edges, sin tocar la lógica de los nodos existentes.
 
-![Loop manual vs LangGraph](figs/langgraph_implementation_01_manual_loop_vs_langgraph.svg)
+![Loop manual vs LangGraph](figs/01_manual_loop_vs_langgraph.svg)
 
 > **La intuición clave:** en el loop manual el control flow *está en el código*. En LangGraph el control flow *es la estructura del grafo*. Eso lo hace inspeccionable, visualizable y modificable sin reescribir lógica.
 
