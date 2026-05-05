@@ -62,7 +62,7 @@ builder.add_conditional_edges("agent", router)
 
 `add_conditional_edges` toma el nodo de origen (`"agent"`) y la función de routing. LangGraph evalúa el router *después de cada ejecución de `agent_node`* y enruta el flujo según el string devuelto.
 
-![Router y conditional edges](figs/langgraph_implementation_04_router_conditional_edges.svg)
+![Router y conditional edges](figs/04_router_conditional_edges.svg)
 
 | `part01` | `part02` |
 |---|---|
@@ -91,7 +91,7 @@ Tras agent:   [Human, AI, Tool, AI, Tool, AIMessage("0.75 BTC costaría $70,650"
 
 Cada nodo solo añade su propio mensaje. Ningún nodo conoce ni gestiona el historial completo — esa es responsabilidad del framework.
 
-![Evolución del MessagesState](figs/langgraph_implementation_05_messages_state_evolution.svg)
+![Evolución del MessagesState](figs/05_messages_state_evolution.svg)
 
 > **El LLM sigue siendo stateless.** `MessagesState` no es memoria del modelo — es el historial completo que se envía en cada llamada a `llm_with_tools.invoke(messages)`. La diferencia con `part01` es que LangGraph gestiona ese append automáticamente.
 
@@ -119,7 +119,7 @@ builder.add_node("tools", tool_node)
 
 `ToolNode` también maneja **tool calls paralelas**: si el LLM emite múltiples `tool_calls` en un solo `AIMessage`, las ejecuta todas y devuelve un `ToolMessage` por cada una.
 
-![Ciclo de vida de una tool call en LangGraph](figs/langgraph_implementation_06_tool_call_lifecycle_langgraph.svg)
+![Ciclo de vida de una tool call en LangGraph](figs/06_tool_call_lifecycle_langgraph.svg)
 
 > **Lo que `ToolNode` abstrae:** dispatch por nombre, parseo de argumentos (`json.loads`), empaquetado del resultado (`role: tool`, `tool_call_id`), y soporte para tool calls paralelas. En `part01` esas ~8 líneas eran explícitas; aquí son una línea.
 
@@ -146,7 +146,7 @@ graph = builder.compile()
 
 El grafo compilado es **reutilizable e inmutable** — puedes invocarlo miles de veces. Para cambiar el comportamiento hay que declarar uno nuevo y compilarlo.
 
-![Construcción y compilación del grafo](figs/langgraph_implementation_07_compile_graph_lifecycle.svg)
+![Construcción y compilación del grafo](figs/07_compile_graph_lifecycle.svg)
 
 > **`recursion_limit`:** se configura en la compilación con `graph = builder.compile(recursion_limit=15)`. El valor por defecto es 25. Superar el límite lanza `GraphRecursionError`.
 
@@ -185,7 +185,7 @@ from IPython.display import Image, display
 display(Image(graph.get_graph().draw_mermaid_png()))
 ```
 
-![Inspección del grafo con streaming](figs/langgraph_implementation_08_streaming_inspection.svg)
+![Inspección del grafo con streaming](figs/08_streaming_inspection.svg)
 
 > **Útil para enseñanza:** `stream_mode="updates"` muestra qué hace cada nodo y en qué orden. Ver `agent → tools → agent → __end__` en tiempo real hace el loop agéntico tangible.
 
@@ -195,7 +195,7 @@ display(Image(graph.get_graph().draw_mermaid_png()))
 
 La figura siguiente muestra todos los componentes como un mapa de referencia: desde el cliente LLM y las herramientas decoradas con `@tool`, pasando por los nodos y el router, hasta el grafo compilado y los métodos de ejecución e inspección.
 
-![Arquitectura completa del notebook LangGraph](figs/langgraph_implementation_09_master_langgraph_notebook_architecture.svg)
+![Arquitectura completa del notebook LangGraph](figs/09_master_langgraph_notebook_architecture.svg)
 
 ---
 
