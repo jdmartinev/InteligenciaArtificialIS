@@ -36,7 +36,7 @@ LangGraph **acumula** las actualizaciones — no reemplaza el estado. Cuando `ag
 
 `ToolNode` sigue exactamente el mismo contrato: recibe el estado, extrae los `tool_calls` del último `AIMessage`, ejecuta las funciones correspondientes, y devuelve `{"messages": [ToolMessage(...), ...]}`.
 
-![Nodos como unidades de cómputo](figs/langgraph_implementation_03_nodes_as_computation_units.svg)
+![Nodos como unidades de cómputo](figs/03_nodes_as_computation_units.svg)
 
 | Nodo | Input (del estado) | Output (actualización) |
 |---|---|---|
