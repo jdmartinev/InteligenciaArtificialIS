@@ -122,11 +122,23 @@ The video must include:
 
 The repository must include:
 
-- A clear `README.md` with instructions to run the code  
-- Training and evaluation scripts  
-- Pretrained models or checkpoints (if applicable)  
-- `requirements.txt` or `environment.yml`  
+- A clear `README.md` with instructions to run the code.
+- Training and evaluation scripts.
+- Pretrained models or checkpoints, if applicable.
+- `requirements.txt` or `environment.yml`.
+- An AI usage statement.
 
+### AI Usage Statement
+
+Students must include a brief statement describing whether AI tools were used during the development of the project.
+
+If AI tools were used, the statement should specify:
+
+- The AI tools used.
+- The purpose of use.
+- Which parts of the project were supported by AI (e.g., code generation, debugging, documentation, analysis, experimentation, etc.).
+
+Students remain fully responsible for understanding, validating, and explaining all submitted work.
 ---
 
 ## ⚠️ Final Submission
